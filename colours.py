@@ -1,6 +1,25 @@
 from enum import Enum
 from collections import namedtuple
 
+# Constants for the percent that looks good to overlay boolean data onto a backing picture
+DARK_OVERLAY_PERCENT = 0.2
+LIGHT_OVERLAY_PERCENT = 0.15
+
+def shift_dark(colour_value):
+    # Shifts a colour value to be darker
+    # The value should be between 0-255
+    return int(colour_value * DARK_OVERLAY_PERCENT)
+
+def shift_light(colour_value):
+    # Shifts a colour value to be lighter
+    # The value should also be between 0-255
+    return int(colour_value * LIGHT_OVERLAY_PERCENT + 255 * (1 - LIGHT_OVERLAY_PERCENT))
+
+def darker(r, g, b):
+    return (shift_dark(r), shift_dark(g), shift_dark(b))
+
+def lighter(r, g, b):
+    return (shift_light(r), shift_light(g), shift_light(b))
 
 Colour = namedtuple('Colour', ['number', 'hex', 'r', 'g', 'b'])
 

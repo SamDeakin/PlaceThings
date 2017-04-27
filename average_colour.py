@@ -6,6 +6,8 @@ from PIL import Image
 
 from colours import Colours
 from colours import NUMBER_OF_COLOURS
+from colours import darker
+from colours import lighter
 
 print('Setting up...')
 
@@ -22,6 +24,7 @@ def print_progress(num, total):
     print('[{bar}] {percent:.2f}%'.format(bar=bar, percent=percent * 100), end='\r')
 
 pixels = [[[0 for i in range(NUMBER_OF_COLOURS)] for j in range(1000)] for k in range(1000)]
+final_pixel = [[(0, 0) for i in range(1000)] for k in range(1000)]
 
 print('Processing file...')
 
@@ -36,8 +39,13 @@ with open('tile_placements.csv') as f:
             x = int(x) - 1
             y = int(y) - 1
             colour = int(colour)
+            timestamp = int(timestamp)
 
             pixels[x][y][colour] += 1
+
+            current_timestamp, current_colour = final_pixel[x][y]
+            if timestamp > current_timestamp:
+                final_pixel[x][y] = (timestamp, colour)
 
             print_progress(line_num, NUM_LINES)
         except:
@@ -52,12 +60,15 @@ print('Creating images...')
 
 # We create two images here
 # This is average colour with colours weighted by blending
-blended_average = Image.new('RGB', (1000, 1000))
+blended_average = Image.new('RGB', (1000, 1000), color=(255, 255, 255))
 # This is the most common colour
-most_common = Image.new('RGB', (1000, 1000))
+most_common = Image.new('RGB', (1000, 1000), color=(255, 255, 255))
 
 # This is for pixels that were never placed
 never_placed = Image.new('RGB', (1000, 1000))
+# More never placed data with the end result overlaid on top
+never_placed_dark_overlay = Image.new('RGB', (1000, 1000))
+never_placed_light_overlay = Image.new('RGB', (1000, 1000))
 
 for x in range(1000):
     for y in range(1000):
@@ -83,16 +94,14 @@ for x in range(1000):
             total_g += colour.g * num
             total_b += colour.b * num
 
-        r = 0
-        g = 0
-        b = 0
         if total_placed != 0:
             r = int(total_r / total_placed)
             g = int(total_g / total_placed)
             b = int(total_b / total_placed)
-        blended_average.putpixel((x, y), (r, g, b))
+            blended_average.putpixel((x, y), (r, g, b))
 
         if most_num > 0:
+            # Sum and average the colours with the (same) highest number of placements
             r = 0
             g = 0
             b = 0
@@ -108,13 +117,26 @@ for x in range(1000):
             b = int(b / length)
             most_common.putpixel((x, y), (r, g, b))
 
+            # Calculate the shifted final colour for the overlaid never_paced pictures
+            timestamp, final_colour_code = final_pixel[x][y]
+            final_colour = Colours[final_colour_code]
+            final_r = final_colour.r
+            final_g = final_colour.g
+            final_b = final_colour.b
+
+            never_placed_dark_overlay.putpixel((x, y), darker(final_r, final_g, final_b))
+            never_placed_light_overlay.putpixel((x, y), lighter(final_r, final_g, final_b))
         else:
-            never_placed.putpixel((x, y), (256, 256, 256))
+            never_placed.putpixel((x, y), (255, 255, 255))
+            never_placed_dark_overlay.putpixel((x, y), (255, 255, 255))
+            never_placed_light_overlay.putpixel((x, y), (0, 0, 0))
 
         print_progress(x * 1000 + y, NUM_PIXELS)
 
 print()
 
-blended_average.save('blended_average.png')
-most_common.save('most_common.png')
-never_placed.save('never_placed.png')
+blended_average.save('results/blended_average.png')
+most_common.save('results/most_common.png')
+never_placed.save('results/never_placed.png')
+never_placed_dark_overlay.save('results/never_placed_dark_overlay.png')
+never_placed_light_overlay.save('results/never_placed_light_overlay.png')
