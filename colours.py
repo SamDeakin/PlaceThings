@@ -3,7 +3,7 @@ from collections import namedtuple
 
 # Constants for the percent that looks good to overlay boolean data onto a backing picture
 DARK_OVERLAY_PERCENT = 0.2
-LIGHT_OVERLAY_PERCENT = 0.15
+LIGHT_OVERLAY_PERCENT = 0.2
 
 def shift_dark(colour_value):
     # Shifts a colour value to be darker
@@ -21,7 +21,13 @@ def darker(r, g, b):
 def lighter(r, g, b):
     return (shift_light(r), shift_light(g), shift_light(b))
 
-Colour = namedtuple('Colour', ['number', 'hex', 'r', 'g', 'b'])
+class Colour(namedtuple('Colour', ['number', 'hex', 'r', 'g', 'b'])):
+    def darker(self):
+        return darker(self.r, self.g, self.b)
+    def lighter(self):
+        return lighter(self.r, self.g, self.b)
+    def get_tuple(self):
+        return (self.r, self.g, self.b)
 
 NUMBER_OF_COLOURS = 16
 
